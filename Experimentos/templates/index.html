@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/static/img/favicon.ico">
+    <title>EurekaBot</title>
+
+    <style>
+        /* Definimos una fuente personalizada */
+        @font-face {
+            font-family: 'RubikMoonrocks-Regular';
+            src: url('/static/fonts/RubikMoonrocks-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        /* Estilos generales del cuerpo de la página */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-image: url('/static/img/fondo1.jpg');
+            background-size: cover;
+        }
+        
+        /* Contenedor principal */
+        .container {
+            width: 50%;
+            margin: 0 auto;
+            margin-top: 10%;
+            background: rgb(232, 226, 31);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Caja de chat */
+        .chatbox {
+            margin: auto;
+            width: 90%;
+            max-width: 800px;
+            height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: 1px solid #ccc;
+            padding: 20px;
+            text-align: left;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(8, 19, 218, 0.2);
+        }
+        
+        /* Campos de entrada y botones */
+        input {
+            width: 80%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px;
+            background: #5a44bc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        /* Estilos para los botones de experimentos */
+        .experimento {
+            background: #5a44bc;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+        
+        /* Estilos del título */
+        h1 {
+            font-family: 'RubikMoonrocks-Regular', cursive;
+            letter-spacing: 6px;
+            color: #08328e;
+        }
+        
+        /* Contenedor del título con ícono */
+        .title-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .title-icon {
+            width: 120px;
+            height: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title-container">
+            <img src="/static/img/chatica1.png" alt="Chatbot Icono" class="title-icon">
+            <h1>BUSCA TU EXPERIMENTO</h1>
+        </div>
+        
+        <div class="chatbox" id="chatbox"></div>
+        <input type="text" id="inputQuery" placeholder="Escribe una palabra clave...">
+        <button onclick="buscarExperimento()">Buscar</button>
+    </div>
+
+    <script>
+        /* Saludo inicial aleatorio */
+        window.onload = function() {
+            let chatbox = document.getElementById("chatbox");
+            let saludos = [
+                "¡Hola! 😊 Bienvenido a EurekaBot. Escribe una palabra clave para encontrar experimentos científicos.",
+                "¡Hola, explorador de la ciencia! 🔬 ¿En qué experimento puedo ayudarte hoy?",
+                "¡Bienvenido a EurekaBot! 🚀 Descubre experimentos fascinantes escribiendo una palabra clave.",
+                "¡Hola! ¿Listo para aprender ciencia de manera divertida? 🔍 Pregunta por un experimento."
+            ];
+            let saludoAleatorio = saludos[Math.floor(Math.random() * saludos.length)];
+            chatbox.innerHTML += `<p><strong>EurekaBot:</strong> ${saludoAleatorio}</p>`;
+        };
+
+        /* Función para buscar experimentos */
+        function buscarExperimento() {
+            let query = document.getElementById("inputQuery").value.trim().toLowerCase();
+            let chatbox = document.getElementById("chatbox");
+            
+            chatbox.innerHTML += `<p><strong>Tú:</strong> ${query}</p>`;
+
+            // Respuesta especial si el usuario dice "gracias"
+            if (query.includes("gracias")) {
+                let respuestas = [
+                    "¡De nada! 😊",
+                    "¡Para eso estoy aquí! 🚀",
+                    "No hay de qué. ¡Sigue explorando experimentos! 🔬",
+                    "¡Con mucho gusto! 💡"
+                ];
+                let respuestaAleatoria = respuestas[Math.floor(Math.random() * respuestas.length)];
+                chatbox.innerHTML += `<p><strong>EurekaBot:</strong> ${respuestaAleatoria}</p>`;
+                return;
+            }
+
+            // Hacer la consulta a la API para buscar experimentos
+            fetch(`/buscar?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.experimentos && data.experimentos.length > 0) {
+                        chatbox.innerHTML += `<p><strong>EurekaBot:</strong> Encontré estos experimentos. Haz clic en uno para ver más detalles:</p>`;
+                        data.experimentos.forEach(exp => {
+                            chatbox.innerHTML += `<button class="experimento" onclick="mostrarDescripcion('${exp.nombre.replace(/'/g, "\\'")}')">${exp.nombre}</button>`;
+                        });
+                    } else {
+                        chatbox.innerHTML += `<p><strong>EurekaBot:</strong> No encontré experimentos relacionados.</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    chatbox.innerHTML += `<p><strong>EurekaBot:</strong> Hubo un error en la búsqueda.</p>`;
+                });
+        }
+
+        /* Función para mostrar la descripción del experimento */
+        function mostrarDescripcion(nombre) {
+            fetch(`/experimentos/${nombre}`)
+                .then(response => response.json())
+                .then(data => {
+                    let chatbox = document.getElementById("chatbox");
+                    chatbox.innerHTML += `<p><strong>📌 ${data.nombre}:</strong> ${data.descripcion}</p>`;
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    chatbox.innerHTML += `<p><strong>EurekaBot:</strong> No se encontró la descripción.</p>`;
+                });
+        }
+    </script>
+</body>
+</html>
+
